@@ -2,7 +2,9 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use App\Repository\SkillsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -10,6 +12,15 @@ use Doctrine\ORM\Mapping as ORM;
  * @ApiResource()
  * @ORM\Entity(repositoryClass=SkillsRepository::class)
  */
+#[ApiResource(
+    paginationItemsPerPage:20
+),
+ApiFilter(
+    SearchFilter::class, properties: [
+        'title' => 'partial'
+    ]
+)
+]
 class Skills
 {
     /**

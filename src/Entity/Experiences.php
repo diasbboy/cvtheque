@@ -2,14 +2,16 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
-use App\Repository\ExperiencesRepository;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\ExperiencesRepository;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ApiResource()
  * @ORM\Entity(repositoryClass=ExperiencesRepository::class)
  */
+#[ApiResource()]
 class Experiences
 {
     /**
@@ -22,31 +24,37 @@ class Experiences
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $title;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $company;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $city;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime", nullable ="true")
      */
+    #[Groups(["user:read", "user:write" ])]
     private $startDate;
 
     /**
-     * @ORM\Column(type="datetime")
+     * @ORM\Column(type="datetime", nullable ="true")
      */
+    #[Groups(["user:read", "user:write" ])]
     private $endDate;
 
     /**
      * @ORM\Column(type="text")
      */
+    #[Groups(["user:read", "user:write" ])]
     private $description;
 
     /**

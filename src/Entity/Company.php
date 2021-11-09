@@ -2,19 +2,35 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Core\Annotation\ApiFilter;
+use DateTime;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\CompanyRepository;
 use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
- * @ApiResource(normalizationContext={"groups"={"user:read"}},
- *              denormalizationContext={"groups"={"user:write"}})
+ * @UniqueEntity("email", message="L'adresse email est déjà utilisé")
  * @ORM\Entity(repositoryClass=CompanyRepository::class)
  */
+#[ApiResource(normalizationContext: ["groups" => ["user:read"]],
+             denormalizationContext: ["groups" => ["user:write"]]
+),
+ApiFilter(
+    SearchFilter::class, properties: [
+        'email' => 'partial',
+        'name' => ' partial',
+        'city' => 'partial',
+        'zip' => 'partial'
+    ]
+)
+]
 class Company implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
@@ -23,18 +39,21 @@ class Company implements UserInterface, PasswordAuthenticatedUserInterface
      * @ORM\Column(type="integer")
      * @Groups("user:read")
      */
+    #[Groups(["user:read"])]
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Groups({"user:read", "user:write"})
+     * @Assert\NotBlank(message="l'email est obligatoire")
+     * @Assert\Email(message="Le format de l'adresse email doit être valide")
      */
+    #[Groups(["user:read", "user:write" ])]
     private $email;
 
     /**
      * @ORM\Column(type="json")
-     * @Groups("user:read")
      */
+    #[Groups(["user:read"])]
     private $roles = [];
 
     /**
@@ -44,84 +63,96 @@ class Company implements UserInterface, PasswordAuthenticatedUserInterface
     private $password;
 
     /**
-     * @Groups("user:write")
      * @SerializedName("password")
+     * @Assert\NotBlank(message="le mot de passe est obligatoire")
      */
+    #[Groups(["user:write" ])]
     private $plainPassword;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write" ])]
     private $companyType;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @Assert\NotBlank(message="le nom est obligatoire")
      */
+    #[Groups(["user:read", "user:write" ])]
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write" ])]
     private $phone;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write" ])]
     private $address;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write" ])]
     private $city;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write" ])]
     private $zip;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $photo;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $seekingJobType;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $seekingJobContract;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $availability;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $field;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read"])]
     private $registrationDate;
 
-
+    /**
+     * @ORM\PrePersist
+     */
+    public function prePersist()
+    {
+        if(empty($this->registrationDate))
+        {
+            $this->registrationDate = new DateTime();
+        }
+    }
+   
     public function getId(): ?int
     {
         return $this->id;

@@ -2,40 +2,67 @@
 
 namespace App\Entity;
 
+use DateTime;
+use App\Entity\Cv;
 use Doctrine\ORM\Mapping as ORM;
 use App\Repository\CandidateRepository;
+use ApiPlatform\Core\Annotation\ApiFilter;
 use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\ORM\Mapping\HasLifecycleCallbacks;
 use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\SerializedName;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
- * @ApiResource(normalizationContext={"groups"={"user:read"}},
- *              denormalizationContext={"groups"={"user:write"}})
+ * @UniqueEntity("email", message="L'adresse email est déjà utilisé")
  * @ORM\Entity(repositoryClass=CandidateRepository::class)
- * 
+ * @ORM\HasLifecycleCallbacks
  */
+#[ApiResource(
+    normalizationContext: ["groups" => ["user:read"]],
+    denormalizationContext: ["groups" => ["user:write"]],
+    paginationItemsPerPage:20,    
+),
+ApiFilter(
+    SearchFilter::class, properties: [
+        'email' => 'partial',
+        'name' => 'partial', 
+        'firstName' => 'partial',
+        'city' => 'partial',
+        'zip' => 'partial' 
+    ]
+)
+]
 class Candidate implements UserInterface, PasswordAuthenticatedUserInterface
 {
     /**
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Groups("user:read")
      */
+    #[Groups(["user:read"])]
     private $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     * @Groups({"user:read", "user:write"})
+     * @Assert\Email(message="Le format de l'adresse email doit être valide")
      */
+    #[
+        Groups(["user:read", "user:write" ]),
+        NotBlank(message:"L'adresse mail est obligatoire"),
+    ]
     private $email;
 
     /**
      * @ORM\Column(type="json")
-     * @Groups("user:read")
      */
+    #[Groups(["user:read"])]
     private $roles = [];
 
     /**
@@ -45,83 +72,111 @@ class Candidate implements UserInterface, PasswordAuthenticatedUserInterface
     private $password;
 
     /**
-     * @Groups("user:write")
      * @SerializedName("password")
      */
+    #[
+        Groups(["user:write" ]),
+        Length(min:8, minMessage:"Le mot de passe doit contenir 6 caractères minimum"),
+        NotBlank(message:"Le mot de passe est obligatoire")
+    ]
     private $plainPassword;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @Assert\NotBlank(message="le nom est obligatoire")
      */
+    #[
+        Groups(["user:read", "user:write"]),
+        Length(min: 2, minMessage:"Le nom doit contenir minimum 2 caractères"),
+        NotBlank(message:"Le nom est obligatoire")
+    ]
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @Assert\NotBlank(message="le prénom est obligatoire")
+     * @Assert\Length(
+     *      min=3, minMessage="Le prénom doit faire minimum {{ limit }} caractères",
+     *      max=30, maxMessage="Le prénom doit faire maximum {{ limit }} caractères"
+     * )
      */
+    #[
+        Groups(["user:read", "user:write"]),
+        Length(min: 2, minMessage:"Le prénom doit contenir minimum 2 caractères"),
+        NotBlank(message:"Le prénom est obligatoire")
+    ]
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $phone;
 
     /**
-     * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
+     * @ORM\Column(type="string", length=255,)
      */
+    #[Groups(["user:read", "user:write"])]
     private $address;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $city;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $zip;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $photo;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $seekingJobType;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $seekingJobContract;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $availability;
 
     /**
      * @ORM\Column(type="datetime")
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read"])]
     private $registrationDate;
 
     /**
      * @ORM\OneToOne(targetEntity=Cv::class, cascade={"persist", "remove"})
-     * @Groups({"user:read", "user:write"})
      */
+    #[Groups(["user:read", "user:write"])]
     private $cv;
 
+    /**
+     * @ORM\PrePersist
+     */
+    public function prePersist()
+    {
+        if(empty($this->registrationDate))
+        {
+            $this->registrationDate = new DateTime();
+        }
+    }
 
     public function getId(): ?int
     {

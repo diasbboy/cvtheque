@@ -2,16 +2,25 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Annotation\ApiFilter;
 use App\Repository\CvRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\SearchFilter;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
- * @ApiResource()
  * @ORM\Entity(repositoryClass=CvRepository::class)
  */
+#[ApiResource(
+    paginationItemsPerPage:20
+),
+ApiFilter(
+    SearchFilter::class, properties: ['title' => 'partial', 'skills' => 'partial']
+)
+]
 class Cv
 {
     /**
@@ -24,16 +33,19 @@ class Cv
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $title;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $urlPerso;
 
     /**
-     * @ORM\Column(type="string", length=255)
+     * @ORM\Column(type="string", length=255, nullable=true)
      */
+    #[Groups(["user:read", "user:write" ])]
     private $video;
 
     /**

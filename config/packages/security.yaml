@@ -31,7 +31,6 @@ security:
       pattern: ^/api/login
       provider: app_users
       stateless: true
-      anonymous: false
       json_login:
         check_path: /api/login
         username_path: email
@@ -40,9 +39,8 @@ security:
         failure_handler: lexik_jwt_authentication.handler.authentication_failure
 
     api:
-      pattern: ^/api/
+      pattern: ^/api
       stateless: true
-      anonymous: false
       provider: app_users
       guard:
         authenticators:
@@ -52,6 +50,9 @@ security:
       # anonymous: lazy
       lazy: true
       provider: candidate_provider
+      json_login:
+        check_path: /api/login_check
+        success_handler: 
 
       # activate different ways to authenticate
       # https://symfony.com/doc/current/security.html#firewalls-authentication
@@ -67,3 +68,8 @@ security:
 
     - { path: ^/api/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
     - { path: ^/api/candidates, roles: IS_AUTHENTICATED_FULLY }
+    - { path: âpi/companies, roles: IS_AUTHENTICATED_FULLY}
+    - { path: âpi/formations, roles: IS_AUTHENTICATED_FULLY}
+    - { path: âpi/skills, roles: IS_AUTHENTICATED_FULLY}
+    
+    # - { path: ^/api/candidates, roles: IS_AUTHENTICATED_ANONYMOUSLY }
